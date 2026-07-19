@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Runs on main (and on demand). One-time setup by the repo owner:
+# Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# After that, every push to main publishes to https://pv80.github.io/Phone-game/
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
