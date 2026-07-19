@@ -1,0 +1,21 @@
+{
+  "name": "dead-line-zombie-last-stand",
+  "version": "1.0.0",
+  "description": "A mobile-first HTML5 zombie last-stand shooter. Move side to side, blast the horde, and hit the target to unlock guns, gunners and power-ups.",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080",
+    "icons": "node assets/make-icons.js",
+    "test": "node assets/smoke-test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41729/git/PV80/Phone-game"
+  },
+  "keywords": ["game", "zombie", "shooter", "html5", "canvas", "mobile", "pwa"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}
