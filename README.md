@@ -38,7 +38,7 @@ Then open `http://<your-computer-ip>:8080` on your phone (same Wi-Fi).
 
 ## 🎮 How to play
 
-You're the lone survivor at the bottom — a fully animated sprite-sheet protagonist (idle / aim / fire / take-hit / death frames from `assets/player.png`, with ally gunners drawn from the same art). Zombies pour down from the top. You **fire automatically** — your job is to dodge, aim the lane, and grow your firepower.
+You're Vex, the lone survivor at the bottom — a fully animated sprite protagonist (idle / aim / 3 firing frames / take-hit / death). Your unlocked ally gunners are **Bruiser** (heavy), **Ghost** (marksman) and **Doc** (medic), each with their own art. Zombies pour down from the top through **9 rotating locations** (city, forest, bridge, subway, factory, military base, sewer, hospital, rooftop helipad — the scene changes every 4 waves). You **fire automatically** — your job is to dodge, aim the lane, and grow your firepower.
 
 | Action | Control |
 | --- | --- |
@@ -66,7 +66,7 @@ Each target costs a few more hits than the last, so the deeper you go, the harde
 Pistol → SMG → Shotgun (spread) → Assault Rifle (piercing) → Minigun → Plasma Cannon (heavy piercing splash). More gunners = more of everything, all firing your current weapon.
 
 ### Enemies
-Walkers, fast Runners, tanky Brutes, Spitters — and a **Boss** every 5th wave. Difficulty and spawn rate climb every wave. Your best score is saved locally.
+All fully sprite-animated: **Walkers**, fast **Runners**, armored **Brutes**, ranged **Spitters**, exploding **Boomers** (their death blast hurts the horde — and you, if you're close), low crawling **Crawlers** — and a hulking **Boss** every 5th wave. Difficulty and spawn rate climb every wave. Your best score is saved locally.
 
 ---
 
@@ -81,8 +81,9 @@ Phone-game/
 ├── sw.js                   # service worker (offline + installable)
 ├── icons/                  # app icons (SVG + generated PNGs)
 ├── assets/
-│   ├── player.png          # protagonist sprite sheet (idle/aim/fire/hit/die)
-│   ├── extract_player.py   # regenerates player.png from the source art (bg-keyed)
+│   ├── sprites/            # packed atlases: player, allies, zombies, weapons, powerups (+atlas.js)
+│   ├── maps/               # 9 location backdrops (JPG) rotated between waves
+│   ├── build_sprites.py    # rebuilds all atlases from the AI source sheets
 │   ├── make-icons.js       # regenerates PNG icons (node, no deps)
 │   └── smoke-test.js       # headless Playwright test of the game loop
 └── .github/workflows/pages.yml  # auto-deploy to GitHub Pages
