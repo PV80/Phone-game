@@ -35,6 +35,43 @@
   window.addEventListener("orientationchange", resize);
   resize();
 
+  // ---------- Player sprite sheet ----------
+  // Frames extracted from the uploaded protagonist sprite sheet (see
+  // assets/extract_player.py). All frames face right; feet are aligned to the
+  // bottom of each cell so animation doesn't jitter.
+  const Sprite = {
+    img: new Image(),
+    ready: false,
+    cellH: 224,
+    footPad: 6,
+    F: {
+      idle: [0, 0, 152, 224],
+      aim: [152, 0, 152, 224],
+      fire: [304, 0, 152, 224],
+      fire2: [456, 0, 152, 224],
+      hit: [608, 0, 152, 224],
+      die: [760, 0, 208, 224],
+    },
+  };
+  Sprite.img.onload = () => { Sprite.ready = true; };
+  Sprite.img.onerror = () => { Sprite.ready = false; };
+  Sprite.img.src = "assets/player.png";
+
+  const SPRITE_H = 118; // on-screen height of the protagonist in world units
+
+  function drawSpriteFrame(frameKey, cx, groundY, scale, alpha) {
+    if (!Sprite.ready) return false;
+    const f = Sprite.F[frameKey] || Sprite.F.aim;
+    const dw = f[2] * scale, dh = f[3] * scale;
+    const top = groundY - (Sprite.cellH - Sprite.footPad) * scale;
+    ctx.save();
+    if (alpha != null) ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(Sprite.img, f[0], f[1], f[2], f[3], cx - dw / 2, top, dw, dh);
+    ctx.restore();
+    return true;
+  }
+
   // ---------- Utility ----------
   const rand = (a, b) => a + Math.random() * (b - a);
   const randi = (a, b) => Math.floor(rand(a, b + 1));
@@ -179,6 +216,8 @@
       flash: 0,
       moveDir: 0, // -1 left, 1 right, 0 none from buttons
       dragX: null,
+      muzzleT: 0, // >0 while a shot muzzle flash is showing
+      shotToggle: 0, // alternates fire/fire2 frames per shot
     };
   }
 
@@ -440,6 +479,10 @@
         hitSet: null,
       });
     }
+    if (isPlayer) {
+      game.player.muzzleT = 0.07;
+      game.player.shotToggle ^= 1;
+    }
     Audio.shoot();
   }
 
@@ -493,6 +536,7 @@
     // Regen + timers
     if (pl.regen > 0 && pl.hp < pl.maxhp) pl.hp = clamp(pl.hp + pl.regen * dt, 0, pl.maxhp);
     pl.rapid = Math.max(0, pl.rapid - dt);
+    pl.muzzleT = Math.max(0, pl.muzzleT - dt);
     pl.shield = Math.max(0, pl.shield - dt);
     pl.damageBoost = Math.max(0, pl.damageBoost - dt);
     pl.flash = Math.max(0, pl.flash - dt);
@@ -745,55 +789,79 @@
   function drawPlayer() {
     const pl = game.player;
     if (!pl) return;
+    const groundY = pl.y + pl.h / 2;
+
+    // Ground shadow
     ctx.save();
-    ctx.translate(pl.x, pl.y);
+    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(pl.x, groundY, 26, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     // Shield ring
     if (pl.shield > 0) {
       ctx.strokeStyle = "rgba(200,255,143," + (0.4 + 0.3 * Math.sin(game.time * 10)) + ")";
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(0, -6, 34, 0, Math.PI * 2);
+      ctx.arc(pl.x, groundY - 48, 40, 0, Math.PI * 2);
       ctx.stroke();
     }
 
-    // Body
-    ctx.fillStyle = "#3a6b8f";
-    roundRect(-pl.w / 2, -pl.h / 2, pl.w, pl.h, 6);
-    ctx.fill();
-    // Vest
-    ctx.fillStyle = "#2d5470";
-    roundRect(-pl.w / 2 + 4, -pl.h / 2 + 6, pl.w - 8, pl.h - 20, 4);
-    ctx.fill();
-    // Head
-    ctx.fillStyle = "#e8c39e";
-    ctx.beginPath();
-    ctx.arc(0, -pl.h / 2 - 6, 9, 0, Math.PI * 2);
-    ctx.fill();
-    // Gun
-    ctx.fillStyle = "#222";
-    ctx.fillRect(-3, -pl.h / 2 - 22, 6, 22);
-    const wpn = WEAPONS[pl.weapon];
-    ctx.fillStyle = wpn.color;
-    ctx.fillRect(-2, -pl.h / 2 - 22, 4, 5);
+    // Pick animation frame
+    let key;
+    if (state === State.OVER) key = "die";
+    else if (pl.flash > 0.12) key = "hit";
+    else if (pl.muzzleT > 0) key = pl.shotToggle ? "fire" : "fire2";
+    else key = "aim";
 
-    ctx.restore();
-  }
+    // Subtle idle breathing between shots
+    let gy = groundY;
+    if (key === "aim") gy += Math.sin(game.time * 4) * 1.5;
 
-  function drawGunners() {
-    for (const g of game.gunners) {
-      ctx.save();
-      ctx.translate(g.x, g.y);
-      ctx.fillStyle = "#527a4d";
-      roundRect(-g.w / 2, -g.h / 2, g.w, g.h, 5);
+    const scale = SPRITE_H / Sprite.cellH;
+    if (!drawSpriteFrame(key, pl.x, gy, scale, null)) {
+      // Fallback if the sprite sheet failed to load
+      ctx.fillStyle = "#3a6b8f";
+      roundRect(pl.x - 16, groundY - 46, 32, 46, 6);
       ctx.fill();
       ctx.fillStyle = "#e8c39e";
       ctx.beginPath();
-      ctx.arc(0, -g.h / 2 - 5, 7, 0, Math.PI * 2);
+      ctx.arc(pl.x, groundY - 52, 9, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#222";
-      ctx.fillRect(-2, -g.h / 2 - 18, 4, 18);
+    }
+
+    // Upward muzzle flash synced to real shots (bullets travel up)
+    if (pl.muzzleT > 0 && state !== State.OVER) {
+      const wpn = WEAPONS[pl.weapon];
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = wpn.color;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.arc(pl.x + 4, groundY - SPRITE_H * 0.52, 5 + Math.random() * 3, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
+    }
+  }
+
+  function drawGunners() {
+    const gscale = (SPRITE_H * 0.72) / Sprite.cellH;
+    const firing = game.player && game.player.muzzleT > 0;
+    for (const g of game.gunners) {
+      const groundY = g.y + 14;
+      ctx.save();
+      ctx.fillStyle = "rgba(0,0,0,0.3)";
+      ctx.beginPath();
+      ctx.ellipse(g.x, groundY, 18, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      const key = firing ? "fire" : "aim";
+      if (!drawSpriteFrame(key, g.x, groundY, gscale, 0.96)) {
+        ctx.fillStyle = "#527a4d";
+        roundRect(g.x - 11, groundY - 30, 22, 30, 5);
+        ctx.fill();
+      }
     }
   }
 

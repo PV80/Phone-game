@@ -1,11 +1,12 @@
 /* Dead Line — service worker for offline play + install-to-home-screen */
-const CACHE = "deadline-v1";
+const CACHE = "deadline-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/style.css",
   "./js/game.js",
   "./manifest.webmanifest",
+  "./assets/player.png",
   "./icons/icon.svg",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

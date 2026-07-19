@@ -38,7 +38,7 @@ Then open `http://<your-computer-ip>:8080` on your phone (same Wi-Fi).
 
 ## 🎮 How to play
 
-You're the lone survivor at the bottom. Zombies pour down from the top. You **fire automatically** — your job is to dodge, aim the lane, and grow your firepower.
+You're the lone survivor at the bottom — a fully animated sprite-sheet protagonist (idle / aim / fire / take-hit / death frames from `assets/player.png`, with ally gunners drawn from the same art). Zombies pour down from the top. You **fire automatically** — your job is to dodge, aim the lane, and grow your firepower.
 
 | Action | Control |
 | --- | --- |
@@ -81,6 +81,8 @@ Phone-game/
 ├── sw.js                   # service worker (offline + installable)
 ├── icons/                  # app icons (SVG + generated PNGs)
 ├── assets/
+│   ├── player.png          # protagonist sprite sheet (idle/aim/fire/hit/die)
+│   ├── extract_player.py   # regenerates player.png from the source art (bg-keyed)
 │   ├── make-icons.js       # regenerates PNG icons (node, no deps)
 │   └── smoke-test.js       # headless Playwright test of the game loop
 └── .github/workflows/pages.yml  # auto-deploy to GitHub Pages
